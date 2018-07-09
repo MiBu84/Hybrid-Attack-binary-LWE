@@ -1,3 +1,4 @@
+#!/bin/bash
 r=20
 beta=23
 m=160

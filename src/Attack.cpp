@@ -602,16 +602,16 @@ void attack(mat_ZZ& A, vec_ZZ& b, int q, int r, int c) {
 	std::random_device rd;
 	std::mt19937 g(rd());
 
-	//		precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
+	precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
 	//	output_PrecomputedBasis_ToFile(B, B_1_reduced_transposed, B_reduced_gs, vec_RR(INIT_SIZE,m));
 	//	return;
 
 #ifdef USING_MPI
-	if (world_rank % 2 == 0) {
-		precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
-	} else {
-		readBasis_fromFile(B, B_1_reduced_transposed, B_reduced_gs);
-	}
+//	if (world_rank % 2 == 0) {
+//		precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
+//	} else {
+//		readBasis_fromFile(B, B_1_reduced_transposed, B_reduced_gs);
+//	}
 #endif
 
 	// init the random seed

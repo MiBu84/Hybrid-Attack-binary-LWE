@@ -59,7 +59,7 @@ T submatrix(const T& input, int beginRow, int beginCol, int numRows,
 
 #ifndef USING_TBB
 template<typename T>
-using HashMap = std::unordered_map<std::bitset<DIM 96-4-4>, std::vector<T>>;
+using HashMap = std::unordered_map<std::bitset<DIM 140-4-4>, std::vector<T>>;
 #else
 #include "tbb/concurrent_unordered_map.h"
 template<typename T>

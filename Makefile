@@ -4,11 +4,11 @@ SRCS=$(wildcard $(SRCDIR)/*.cpp)
 OBJS=$(SRCS:$(SRCDIR)/%.cpp=$(SRCDIR)/%.o)
 DEPS=$(SRCS:$(SRCDIR)/%.cpp=$(SRCDIR)/%.d)
 
-#CC = mpic++
-CC = g++ 
+CC = mpic++
+#CC = g++ 
 #g++
 
-CPPFLAGS += -DUSING_TBB #-DUSING_MPI
+CPPFLAGS += -DUSING_TBB -DUSING_MPI
 #
 CFLAGS=  -fopenmp -g -Wfatal-errors -march=native -std=c++11  -Ofast
 #-Ofast
