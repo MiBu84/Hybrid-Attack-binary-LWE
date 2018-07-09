@@ -5,6 +5,8 @@
 	reduced_basis		: contains reduced bases
 	MPI-output		: an output folder is generated for each MPI run.
 					Each folder contains as many text files as the number of MPI processes.
+Notes:
+If MPI-output folder is not present, it must be created otherwise output from MPI is loss.
 
 - In order to compile and run the program, the following libraries / compiler are needed
 OpenMPI (mpic++)
