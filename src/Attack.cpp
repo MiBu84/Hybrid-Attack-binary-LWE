@@ -273,6 +273,21 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 		std::cout << "r = " << r << " c = " << c << " beta = " << beta
 				<< std::endl;
 		std::cout << "prune = " << prune << std::endl;
+
+#ifdef MODE_2
+		if (!setRecv) {
+			// waiting for complete signal from others
+			MPI_Irecv(&recvBuffer, 1, MPI_INT, MPI_ANY_SOURCE, PRECOMPUTING_FINISH_TAG,
+					MPI_COMM_WORLD, &recvRequest);// only one receive pro mpi process
+			setRecv = true;
+		} else {
+			MPI_Test(&recvRequest, &flag, MPI_STATUS_IGNORE);
+			if (flag) {
+				std::cout << "MPI proc " << world_rank << " terminated by proc " << recvBuffer << std::endl;
+				break;
+			}
+		}
+#endif
 		double startTimerBKZ = omp_get_wtime();
 		BKZ_FP(B_1_t, delta, beta, prune);
 
@@ -312,32 +327,32 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 		bool cont = test_necessity_condition_for_attack(B,
 				B_1_reduced_transposed, B_reduced_gs, euclid_norm);
 
-//#ifdef USING_MPI
-//		if (cont) {
-//			// signaling others
-//			// signaling all processes
-//			for (int i = 0; i < world_size; ++i) {
-//				if (i!=world_rank) {
-//					buffer[i] = world_rank;
-//					MPI_Isend(&buffer[i], 1, MPI_INT, i, PRECOMPUTING_FINISH_TAG,
-//							MPI_COMM_WORLD, &sendReq[i]);
-//				}
-//			}
-//			for (int i = 0; i < world_size; ++i) {
-//				if (i!=world_rank) {
-//					MPI_Wait(&sendReq[i], MPI_STATUS_IGNORE);
-//				}
-//			}
-//		}
+#ifdef MODE_2
+		if (cont) {
+			// signaling others
+			// signaling all processes
+			for (int i = 0; i < world_size; ++i) {
+				if (i!=world_rank) {
+					buffer[i] = world_rank;
+					MPI_Isend(&buffer[i], 1, MPI_INT, i, PRECOMPUTING_FINISH_TAG,
+							MPI_COMM_WORLD, &sendReq[i]);
+				}
+			}
+			for (int i = 0; i < world_size; ++i) {
+				if (i!=world_rank) {
+					MPI_Wait(&sendReq[i], MPI_STATUS_IGNORE);
+				}
+			}
+		}
 //		MPI_Barrier(MPI_COMM_WORLD);
-//#endif
+#endif
 
 		if (cont) {
 			break;
 		}
 	} while (true);
 
-//	output_PrecomputedBasis_ToFile(B, B_1_reduced_transposed, B_reduced_gs,euclid_norm);
+	//	output_PrecomputedBasis_ToFile(B, B_1_reduced_transposed, B_reduced_gs,euclid_norm);
 //	return;
 
 	std::cout << "Total precomputing time: " << total_precomputing_time
@@ -547,6 +562,7 @@ void attack(mat_ZZ& A, vec_ZZ& b, int q, int r, int c) {
 #endif
 #ifdef MODE_2
 	precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
+	return;
 #endif
 #ifdef MODE_3
 	readBasis_fromFile(B, B_1_reduced_transposed, B_reduced_gs);
