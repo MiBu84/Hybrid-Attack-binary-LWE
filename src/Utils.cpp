@@ -343,38 +343,13 @@ void cpu_freq() {
 void output_PrecomputedBasis_ToFile(const mat_RR& B,
 		const mat_RR& B_1_reduced_transposed, const mat_RR& B_reduced_gs,
 		const vec_RR& euclid_norm) {
-	// write basis B to text
-	//	time_t timev;
-	//	time(&timev);
 	std::ofstream myfile;
-	//	std::string outputName = "basis_";
-	//	// add timestamp
-	//	std::stringstream ss;
-	//	ss << timev;
-	//	outputName += std::to_string(beta) + "_" + ss.str() + ".txt";
-	//
+	std::string testName =
+			input.substr(input.find_last_of("/") + 1,
+					input.find_last_of(".") - input.find_last_of("/") - 1); // cut testx out of input string
+	output = "reduced_basis/"+testName+"_r_" + std::to_string(r)+"_beta_"+std::to_string(beta)+".txt";
 
-//	std::string output = "basis_"
-//			+ input.substr(input.find('/') + 1,
-//					input.find('.') - input.find('/') - 1) + "_thread"
-//			+ std::to_string(omp_get_thread_num()) + ".txt"; // output name: basis_testX_threadY.txt
-
-//	std::string output = input.substr(input.find('/') + 1);
-//	std::cout << std::to_string(omp_get_thread_num()) <<  " output: " << output << std::endl;
-#ifdef USING_MPI
-	// folder name is from input arg
-	std::string output_ = "reduced_basis/"+ output +"/basis_"
-	+ input.substr(input.find('/') + 1,
-			input.find('.') - input.find('/') - 1) + "_proc"
-	+ std::to_string(world_rank) + ".txt";// output name: reduced_basis/basis_testX_procY.txt
-	std::cout << "output: " << output_ << std::endl;
-	myfile.open(output_);
-#else
-	// without MPI whole output name is from input arg
-	std::cout << "output: " << output << std::endl;
 	myfile.open(output);
-#endif
-
 	// B
 	myfile << "B\n";
 	myfile << B;
@@ -384,20 +359,8 @@ void output_PrecomputedBasis_ToFile(const mat_RR& B,
 	// B_reduced_gs
 	myfile << "\nB_reduced_gs\n";
 	myfile << B_reduced_gs;
-	// norm
-	myfile << "\nnorm\n";
-	myfile << euclid_norm;
-
-	myfile << "\npermutation\n";
-	std::ostream_iterator<int> output_iterator(myfile, " ");
-	std::copy(permutation.begin(), permutation.end(), output_iterator);
-	myfile << "\n";
 	myfile.close();
 	std::cout << "output finished...\n";
-#ifdef USING_MPI
-	std::cout << "Reduction iteration count = "
-	<< precomputing_reduction_iterCount << std::endl;
-#endif
 }
 
 bool test_necessity_condition_for_attack(const mat_RR& B,

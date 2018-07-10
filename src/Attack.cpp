@@ -29,9 +29,7 @@
 // for permutation
 #include <set>
 
-#ifdef USING_TBB
 #include <functional>
-#endif
 
 /*
  * read output file given by -output
@@ -50,14 +48,7 @@ void readBasis_fromFile(mat_RR& B, mat_RR& B_1_reduced_transposed,
 			input.substr(input.find_last_of("/") + 1,
 					input.find_last_of(".") - input.find_last_of("/") - 1); // cut testx out of input string
 #ifdef USING_MPI
-//							output = "reduced_basis/03_04_2018_10:49/basis_" + testName + "_proc"
-//							+ std::to_string(world_rank) + ".txt";
-
-//							output = "testcases/test13/test13_r_28_beta_24.txt";
-//							std::cout << "MPI proc. " << world_rank << " reading basis file " << output
-//							<< std::endl;
-
-							output = "testcases/test13/test13_r_20_beta_20.txt";
+							output = "reduced_basis/"+testName+"_r_" + std::to_string(r)+"_beta_"+std::to_string(beta)+".txt";
 							std::cout << "MPI proc. " << world_rank << " reading basis file " << output
 							<< std::endl;
 #else
@@ -79,15 +70,10 @@ void readBasis_fromFile(mat_RR& B, mat_RR& B_1_reduced_transposed,
 		std::map<std::string, char> tokens = { { "B", 'a' }, {
 				"B_1_reduced_transposed", 'b' }, { "B_reduced_gs", 'c' }, {
 				"permutation", 'd' } }; // convention: read case 'a', 'b', 'c'
-
 		while (std::getline(fileHandler, line)) {
-//			std::cout << "line = " << line << std::endl;
 			if (toRead != '\0') {
 				switch (toRead) {
 				case 'a': { // read B
-					if (row == 0) {
-//						std::cout << "read B\n";
-					}
 					// read a new row
 					setRow(B_[row], line, m + 1); // row length = m+1
 					++row;
@@ -98,9 +84,6 @@ void readBasis_fromFile(mat_RR& B, mat_RR& B_1_reduced_transposed,
 					break;
 				}
 				case 'b': { // read B_1_reduced_transposed
-					if (row == 0) {
-//						std::cout << "read B_1_reduced_transposed\n";
-					}
 					// read a new row
 					setRow(B_1_reduced_transposed_[row], line, m - r); // row length = m-r
 					++row;
@@ -111,9 +94,6 @@ void readBasis_fromFile(mat_RR& B, mat_RR& B_1_reduced_transposed,
 					break;
 				}
 				case 'c': { // read B_reduced_gs
-					if (row == 0) {
-//						std::cout << "read B_reduced_gs\n";
-					}
 					// read a new row
 					setRow(B_reduced_gs[row], line, m - r); // row length = m-r
 					++row;
@@ -226,12 +206,15 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 
 	do {
 		double startTimer = omp_get_wtime();
-		//permutate(A, b, error, permutation, g);
+#ifdef MODE_2
+		permutate(A, b, error, permutation, g);
+
 		std::cout << "Permutation: \n";
 		for (const auto& it : permutation) {
 			std::cout << it << " ";
 		}
 		std::cout << std::endl;
+#endif
 		//	A = A.stack(matrix(1,n))  						# NEW!!!!
 		vec_ZZ zero_vec_length_n(INIT_SIZE, A.NumCols());
 		mat_ZZ local_A = stack(A, zero_vec_length_n);
@@ -279,16 +262,12 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 		mat_RR B_1(INIT_SIZE, m - r, m - r);
 		B_1 = submatrix<mat_RR>(B, 0, 0, m - r, m - r); // column vector
 
+#ifdef MODE_2
 // B_1_reduced
 // replace B_1 with B_1,i unimodular
-#ifdef USING_MPI
-//		B_1 = B_1 * random_unimodular_matrix(m - r);
-//		std::cout << "Unimodular matrix generated!\n";
-#else
-//	B_1 = B_1 * random_unimodular_matrix(m - r);
-//	std::cout << "Unimodular matrix generated!\n";
+		B_1 = B_1 * random_unimodular_matrix(m - r);
+		std::cout << "Unimodular matrix generated!\n";
 #endif
-
 		mat_ZZ B_1_t = transpose(conv < mat_ZZ > (B_1));	// row vector
 		double delta = 0.99;
 		std::cout << "r = " << r << " c = " << c << " beta = " << beta
@@ -358,27 +337,12 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 		}
 	} while (true);
 
-//output_individual_matrix(B,B_1_reduced_transposed, B_reduced_gs);
+//	output_PrecomputedBasis_ToFile(B, B_1_reduced_transposed, B_reduced_gs,euclid_norm);
+//	return;
 
 	std::cout << "Total precomputing time: " << total_precomputing_time
 			<< std::endl;
 
-}
-
-#include <set>
-void printHashMap(const HashMap<vec_RR>& hmap) {
-	std::cout << "------------------------------\nPRINT\n";
-	std::cout << "numBucket = " << hmap.size() << std::endl;
-	for (auto it = hmap.begin(); it != hmap.end(); ++it) {
-		std::cout << "Key: " << "[";
-//		for (auto j : it->first)
-//			std::cout << j << " ";
-		std::cout << it->first;
-		std::cout << "]\n";
-		std::cout << "value: \n";
-		for (auto& val : it->second)
-			std::cout << val << std::endl;
-	}
 }
 
 vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
@@ -421,9 +385,7 @@ vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
 		vec_RR w(INIT_SIZE, m - r);
 		vec_RR x(INIT_SIZE, m - r);
 
-#ifdef USING_TBB
 		std::hash < std::bitset < DIM >> hash_fn;
-#endif
 
 		while (!breakFlag) {
 #ifdef USING_MPI
@@ -477,29 +439,14 @@ vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
 					break;
 				}
 
-#ifndef USING_TBB
-				auto it = hash_map.find(ind);
-#else
 				auto it = hash_map.find(hash_fn(ind));
-#endif
 				if (it == hash_map.end()) {
 					// hash_map[ind].append(v_1)
 
-#ifndef USING_TBB
-#pragma omp critical
-					{
-						hash_map.insert(
-								HashMap<std::vector<float>>::value_type(ind,
-										std::vector<std::vector<float>>(1,
-												v_1)));
-					}
-#else
 					hash_map.insert(
 							HashMap<std::vector<float>>::value_type(
 									hash_fn(ind),
 									std::vector<std::vector<float>>(1, v_1)));
-#endif
-
 				} else {
 					for (auto& v_2 : it->second) {
 						if (breakFlag) {
@@ -559,7 +506,6 @@ vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
 #endif
 								resIdx = omp_get_thread_num();
 								res_[resIdx] = res;
-//									printHashMap(hash_map);
 #ifdef USING_MPI
 								// signaling all processes
 								for (int i = 0; i < world_size; ++i) {
@@ -575,14 +521,7 @@ vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
 						}
 					}
 					// hash_map[ind].append(v_1)
-#ifndef USING_TBB
-#pragma omp critical
-					{
-						it->second.push_back(v_1);
-					}
-#else
 					it->second.push_back(v_1);
-#endif
 				} // end else
 			}	// end for-loop
 
@@ -602,21 +541,33 @@ void attack(mat_ZZ& A, vec_ZZ& b, int q, int r, int c) {
 	std::random_device rd;
 	std::mt19937 g(rd());
 
-	precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
-	//	output_PrecomputedBasis_ToFile(B, B_1_reduced_transposed, B_reduced_gs, vec_RR(INIT_SIZE,m));
-	//	return;
-
 #ifdef USING_MPI
-//	if (world_rank % 2 == 0) {
-//		precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
-//	} else {
-//		readBasis_fromFile(B, B_1_reduced_transposed, B_reduced_gs);
-//	}
+#ifdef MODE_1
+	precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
+#endif
+#ifdef MODE_2
+	precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
+#endif
+#ifdef MODE_3
+	readBasis_fromFile(B, B_1_reduced_transposed, B_reduced_gs);
+#endif
+#ifdef MODE_4
+	if (world_rank % 2 == 0) {
+		precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
+	} else {
+		readBasis_fromFile(B, B_1_reduced_transposed, B_reduced_gs);
+	}
+#endif
+#else
+	precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
 #endif
 
 	// init the random seed
 	vec_RR res = hybridAttack(B, B_1_reduced_transposed, B_reduced_gs, r, c, g);
+
+#ifdef MODE_2
 	repermutate(res, permutation);
+#endif
 
 #ifdef USING_MPI
 	std::cout << "\nMPI-proc " << world_rank << " returns " << res << std::endl;

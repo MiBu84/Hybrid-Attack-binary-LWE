@@ -57,14 +57,9 @@ T submatrix(const T& input, int beginRow, int beginCol, int numRows,
 	return res;
 }
 
-#ifndef USING_TBB
-template<typename T>
-using HashMap = std::unordered_map<std::bitset<DIM 140-4-4>, std::vector<T>>;
-#else
 #include "tbb/concurrent_unordered_map.h"
 template<typename T>
 using HashMap = tbb::concurrent_unordered_map<size_t, std::vector<T>>;
-#endif
 
 //auxiliary functions
 mat_ZZ augment(const mat_ZZ& A, const vec_ZZ& b);

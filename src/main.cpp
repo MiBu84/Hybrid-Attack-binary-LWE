@@ -41,24 +41,11 @@ int main(int argc, char** argv) {
 	if (argc >= 2) {
 		for (int i = 1; i < argc; i++) {
 			std::string s_par = argv[i];
-
-//			// m
-//			if (s_par == "-m") {
-//				m = atoi(argv[i + 1]);
-//				i++;
-//			}
-//
-//			// n
-//			if (s_par == "-n") {
-//				n = atoi(argv[i + 1]);
-//				i++;
-//			}
-//
-//			// q
-//			if (s_par == "-q") {
-//				q = atoi(argv[i + 1]);
-//				i++;
-//			}
+			// m
+			if (s_par == "-m") {
+				m = atoi(argv[i + 1]);
+				i++;
+			}
 
 			// r
 			if (s_par == "-r") {
@@ -96,14 +83,10 @@ int main(int argc, char** argv) {
 				i++;
 			}
 
-//			// prune
-//			if (s_par == "-prune") {
-//				prune = atol(argv[i + 1]);
-//				i++;
-//			}
 		}
 	}
 	std::cout << "DIM = " << DIM << std::endl;
+
 #ifdef USING_MPI
 	if (MPI_Init(NULL, NULL) != MPI_SUCCESS) {
 		std::cout << "MPI init failed\n";
@@ -115,10 +98,10 @@ int main(int argc, char** argv) {
 
 	// redirect output of MPI proc to text file
 	std::string output_redirect = "/output_proc_" + std::to_string(world_rank)
-			+ ".txt";
+	+ ".txt";
 	std::ofstream out("MPI-output/"+output+output_redirect);
-	std::streambuf *coutbuf = std::cout.rdbuf(); //save old buf
-	std::cout.rdbuf(out.rdbuf()); //redirect std::cout to out.txt!
+	std::streambuf *coutbuf = std::cout.rdbuf();//save old buf
+	std::cout.rdbuf(out.rdbuf());//redirect std::cout to out.txt!
 
 	read(input, A, b);
 	// id permutation
@@ -129,10 +112,7 @@ int main(int argc, char** argv) {
 	double start = omp_get_wtime();
 	attack(A, b, q, r, c);
 	std::cout << "\nMPI-proc " << world_rank << " total runtime: "
-			<< omp_get_wtime() - start << " s.\n";
-
-//	int errorCode;
-//	MPI_Abort(MPI_COMM_WORLD, errorCode);
+	<< omp_get_wtime() - start << " s.\n";
 
 	std::cout.rdbuf(coutbuf); //reset to standard output again
 
@@ -146,12 +126,11 @@ int main(int argc, char** argv) {
 	}
 	//while (!permutate(A,b,error,permutation));
 	double start = omp_get_wtime();
-	//std::cout << "read basis file " << output << std::endl;
 	attack(A, b, q, r, c);
 	std::cout << "NP call duration: " << NP_call_duration << " s.\n";
 	std::cout << "total runtime: " << omp_get_wtime() - start << " s.\n";
 	std::cout
-	<< "-------------------------------------------------------------------\n\n";
+			<< "-------------------------------------------------------------------\n\n";
 #endif
 	return 0;
 }

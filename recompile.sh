@@ -1,17 +1,25 @@
 #!/bin/bash
-r=20
-beta=23
-m=160
-c=5
+if [ $# == 0 ]
+	then
+    	echo "Providing arguments"
+	exit
+fi
 
+m=$2
+r=$4
+mode=$6
 
 #
+echo "Recompile for m = "$m" and r = "$r
 dim=$((m-r))
-echo $dim
+echo "Dimension = "$dim
 
 sed -i "s/DIM[ ][0-9]*/DIM $dim/" include/Utils.h
+DEFS="-DMODE_$mode$"
 
 # recompile
 make clean
-make -j8
+make -j8 DEFS=$DEFS
+
+
 

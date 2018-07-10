@@ -47,17 +47,5 @@ void get_instance(mat_ZZ& A, vec_ZZ& b, int n, int m, int q);
  */
 void attack(mat_ZZ& A, vec_ZZ& b, int q, int r, int c);
 
-/**
- * @return
- * B
- * B_not_updated_upperleftCorner
- * B_reduced_gs is GS-basis obtained from B_1_red (B_1_red is B' in paper)
- */
-//void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta,
-//		mat_RR& B, mat_RR& B_1_reduced_transposed, mat_RR& B_reduced_gs);
-//
-//vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
-//		const mat_RR& B_reduced_gs, int r, int c);
-
 
 
