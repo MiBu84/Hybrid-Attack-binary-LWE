@@ -366,11 +366,7 @@ void output_PrecomputedBasis_ToFile(const mat_RR& B,
 bool test_necessity_condition_for_attack(const mat_RR& B,
 		const mat_RR& B_1_reduced_transposed, const mat_RR& B_reduced_gs,
 		const vec_RR& norm) {
-#ifdef USING_MPI
 	std::cout << "MPI-Proc " << world_rank << " checks necessity condition: ";
-#else
-	std::cout << "Necessity condition: ";
-#endif
 	// count number of ones
 	int count = 0;
 	for (int i = m - r; i < m; ++i) {

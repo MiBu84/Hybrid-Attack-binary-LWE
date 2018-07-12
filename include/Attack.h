@@ -21,8 +21,8 @@ extern int numThread;
 extern std::string input;
 extern std::string output;
 extern std::vector<int> permutation;
+extern int timeout;
 
-#ifdef USING_MPI
 #include "mpi.h"
 extern int world_rank;
 extern int world_size;
@@ -30,7 +30,6 @@ extern int precomputing_reduction_iterCount;
 const int PRECOMPUTING_FINISH_TAG = 9990;
 const int ATTACK_FINISH_TAG = 9999;
 #include <future>
-#endif
 
 /**
  * returns a binary vector of length r with exactly c bits 1.

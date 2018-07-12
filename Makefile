@@ -6,7 +6,7 @@ DEPS=$(SRCS:$(SRCDIR)/%.cpp=$(SRCDIR)/%.d)
 
 CC = mpic++ #g++
 
-CPPFLAGS +=$(DEFS) -DUSING_MPI
+CPPFLAGS +=$(DEFS)
 #
 CFLAGS=  -fopenmp -g -Wfatal-errors -march=native -std=c++11  -Ofast
 

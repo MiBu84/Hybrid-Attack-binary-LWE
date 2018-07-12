@@ -44,19 +44,12 @@ void readBasis_fromFile(mat_RR& B, mat_RR& B_1_reduced_transposed,
 
 	std::ifstream fileHandler;
 	std::string output;
-	std::string testName =
-			input.substr(input.find_last_of("/") + 1,
-					input.find_last_of(".") - input.find_last_of("/") - 1); // cut testx out of input string
-#ifdef USING_MPI
-							output = "reduced_basis/"+testName+"_r_" + std::to_string(r)+"_beta_"+std::to_string(beta)+".txt";
-							std::cout << "MPI proc. " << world_rank << " reading basis file " << output
-							<< std::endl;
-#else
-	output = "reduced_basis/" + testName + "_process0.txt";
-	output = "reduced_basis/" + testName + "_beta_" + std::to_string(beta)
-			+ ".txt";
-	std::cout << "reading basis file " << output << std::endl;
-#endif
+	std::string testName = input.substr(input.find_last_of("/") + 1,
+			input.find_last_of(".") - input.find_last_of("/") - 1); // cut testx out of input string
+	output = "reduced_basis/" + testName + "_r_" + std::to_string(r) + "_beta_"
+			+ std::to_string(beta) + ".txt";
+	std::cout << "MPI proc. " << world_rank << " reading basis file " << output
+			<< std::endl;
 
 	fileHandler.open(output);
 	if (fileHandler.fail()) {
@@ -194,7 +187,6 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 	double total_precomputing_time = 0;
 	vec_RR euclid_norm(INIT_SIZE, m - r);
 
-#ifdef USING_MPI
 	int buffer[world_size];
 	int recvBuffer;
 
@@ -202,10 +194,12 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 	MPI_Request sendReq[world_size];
 	bool setRecv = false;
 	int flag;
-#endif
 
+#ifndef MODE_5
 	do {
+#endif
 		double startTimer = omp_get_wtime();
+
 #ifdef MODE_2
 		permutate(A, b, error, permutation, g);
 
@@ -243,6 +237,10 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 				n + 1);
 
 		mat_ZZ AA;
+
+#ifdef MODE_5
+		AA = conv < mat_ZZ > (C_q * inv(A_2));
+#else
 		try {
 			// mat_ZZ_p AA_q = C_q * inv(A_2); // in ZZ_q
 			AA = conv < mat_ZZ > (C_q * inv(A_2));
@@ -250,6 +248,8 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 			std::cout << e.what() << std::endl;
 			continue;
 		}
+#endif
+
 		// AA.change_ring(ZZ)
 		B = q * ident_mat_RR(m_plus1 - n - 1);
 
@@ -268,6 +268,14 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 		B_1 = B_1 * random_unimodular_matrix(m - r);
 		std::cout << "Unimodular matrix generated!\n";
 #endif
+
+#ifdef MODE_5
+		// B_1_reduced
+		// replace B_1 with B_1,i unimodular
+		B_1 = B_1 * random_unimodular_matrix(m - r);
+		std::cout << "Unimodular matrix generated!\n";
+#endif
+
 		mat_ZZ B_1_t = transpose(conv < mat_ZZ > (B_1));	// row vector
 		double delta = 0.99;
 		std::cout << "r = " << r << " c = " << c << " beta = " << beta
@@ -291,13 +299,9 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 		double startTimerBKZ = omp_get_wtime();
 		BKZ_FP(B_1_t, delta, beta, prune);
 
-#ifdef USING_MPI
 		++precomputing_reduction_iterCount;
 		std::cout << " proc " << world_rank << " time BKZ: "
-		<< omp_get_wtime() - startTimerBKZ << " s\n";
-#else
-		std::cout << "time BKZ: " << omp_get_wtime() - startTimerBKZ << " s\n";
-#endif
+				<< omp_get_wtime() - startTimerBKZ << " s\n";
 		mat_ZZ B_1_reduced = transpose(B_1_t);	// column vector
 
 // replace the upper left part of B by B_1_reduced
@@ -324,6 +328,8 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 		}
 
 		total_precomputing_time += omp_get_wtime() - startTimer;
+
+#ifndef MODE_5
 		bool cont = test_necessity_condition_for_attack(B,
 				B_1_reduced_transposed, B_reduced_gs, euclid_norm);
 
@@ -351,6 +357,7 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 			break;
 		}
 	} while (true);
+#endif
 
 	//	output_PrecomputedBasis_ToFile(B, B_1_reduced_transposed, B_reduced_gs,euclid_norm);
 //	return;
@@ -360,9 +367,14 @@ void precomputing(mat_ZZ& A, vec_ZZ& b, int q, int r, long beta, mat_RR& B,
 
 }
 
+#ifdef MODE_5
+vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
+		const mat_RR& B_reduced_gs, int r, int c, std::mt19937& g,
+		double timer_begin, bool& vectorFound) {
+#else
 vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
 		const mat_RR& B_reduced_gs, int r, int c, std::mt19937& g) {
-
+#endif
 // hash_map
 	double startTimer = omp_get_wtime();
 	HashMap<std::vector<float>> hash_map;
@@ -377,7 +389,6 @@ vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
 	bool breakFlag = false;
 	int resIdx = 0;
 
-#ifdef USING_MPI
 	int buffer[world_size];
 	int recvBuffer;
 
@@ -387,6 +398,8 @@ vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
 	bool setRecv = false;
 	size_t iteration_count = 0;
 	const int check_period = 20;
+#ifdef MODE_5
+	const int check_timeout = 100;
 #endif
 
 // for uniform distribution in [0,r-1]
@@ -403,27 +416,46 @@ vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
 		std::hash < std::bitset < DIM >> hash_fn;
 
 		while (!breakFlag) {
-#ifdef USING_MPI
+
 #pragma omp master
 			{
 				++iteration_count;
 				if (!setRecv) {
 					// waiting for complete signal from others
-					MPI_Irecv(&recvBuffer, 1, MPI_INT, MPI_ANY_SOURCE, ATTACK_FINISH_TAG,
-							MPI_COMM_WORLD, &recvRequest);// only one receive pro mpi process
+					MPI_Irecv(&recvBuffer, 1, MPI_INT, MPI_ANY_SOURCE,
+							ATTACK_FINISH_TAG, MPI_COMM_WORLD, &recvRequest);// only one receive pro mpi process
 					setRecv = true;
 				} else {
 					if (iteration_count % check_period == 0) {
 						MPI_Test(&recvRequest, &flag, MPI_STATUS_IGNORE);
 						if (flag) {
-							std::cout << "MPI proc " << world_rank << " terminated by proc " << recvBuffer << std::endl;
+							std::cout << "MPI proc " << world_rank
+									<< " terminated by proc " << recvBuffer
+									<< std::endl;
+#ifdef MODE_5
+#pragma omp critical
+							{
+								vectorFound = true;
+								breakFlag = true;
+							}
+#else
 #pragma omp atomic write
 							breakFlag = true;
+#endif
 						}
 					}
 				}
-			} // end of master-construct
+
+#ifdef MODE_5
+				// check time_out
+				if (iteration_count % check_timeout == 0) {
+					if (omp_get_wtime() - timer_begin > timeout) {
+#pragma omp atomic write
+						breakFlag = true;
+					}
+				}
 #endif
+			} // end of master-construct
 
 //			vec_RR v_1 = sample_bin_vector_RR(r, c);
 			std::vector<float> v_1 = sample_bin_vector_float(r, c, g, dis);
@@ -497,41 +529,40 @@ vec_RR hybridAttack(const mat_RR& B, const mat_RR& B_1_reduced_transposed,
 							for (auto& i : sum_v12) {
 								res.append(RR(i));
 							}
-
-#pragma omp atomic write
-							breakFlag = true;
+#ifdef MODE_5
 #pragma omp critical
 							{
-#ifdef USING_MPI
-								std::cout << "\n MPI-proc " << world_rank
-								<< " time attack: "
-								<< omp_get_wtime() - startTimer
-								<< " s\n";
+								breakFlag = true;
+								vectorFound = true;
+							}
 
-								std::cout << " MPI-proc " << world_rank
-								<< " thread " << omp_get_thread_num()
-								<< " finished." << std::endl;
 #else
-								std::cout << "\ntime attack: "
+#pragma omp atomic write
+							breakFlag = true;
+#endif
+#pragma omp critical
+							{
+								std::cout << "\n MPI-proc " << world_rank
+										<< " time attack: "
 										<< omp_get_wtime() - startTimer
 										<< " s\n";
 
-								std::cout << "\nthread " << omp_get_thread_num()
+								std::cout << " MPI-proc " << world_rank
+										<< " thread " << omp_get_thread_num()
 										<< " finished." << std::endl;
-#endif
 								resIdx = omp_get_thread_num();
 								res_[resIdx] = res;
-#ifdef USING_MPI
+
 								// signaling all processes
 								for (int i = 0; i < world_size; ++i) {
 									buffer[i] = world_rank;
-									MPI_Isend(&buffer[i], 1, MPI_INT, i, ATTACK_FINISH_TAG,
-											MPI_COMM_WORLD, &sendReq[i]);
+									MPI_Isend(&buffer[i], 1, MPI_INT, i,
+											ATTACK_FINISH_TAG, MPI_COMM_WORLD,
+											&sendReq[i]);
 								}
 								for (int i = 0; i < world_size; ++i) {
 									MPI_Wait(&sendReq[i], MPI_STATUS_IGNORE);
 								}
-#endif
 							}
 						}
 					}
@@ -556,17 +587,18 @@ void attack(mat_ZZ& A, vec_ZZ& b, int q, int r, int c) {
 	std::random_device rd;
 	std::mt19937 g(rd());
 
-#ifdef USING_MPI
 #ifdef MODE_1
 	precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
 #endif
+
 #ifdef MODE_2
 	precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
-	return;
 #endif
+
 #ifdef MODE_3
 	readBasis_fromFile(B, B_1_reduced_transposed, B_reduced_gs);
 #endif
+
 #ifdef MODE_4
 	if (world_rank % 2 == 0) {
 		precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
@@ -574,21 +606,28 @@ void attack(mat_ZZ& A, vec_ZZ& b, int q, int r, int c) {
 		readBasis_fromFile(B, B_1_reduced_transposed, B_reduced_gs);
 	}
 #endif
-#else
-	precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
+
+#ifdef MODE_5
+	vec_RR res;
+	double timer_begin; // start timer for checking if timeout is exceeded
+	bool vectorFound = false;// set only if a vector is found
+	do {
+		precomputing(A, b, q, r, beta, B, B_1_reduced_transposed, B_reduced_gs, g);
+		timer_begin = omp_get_wtime();
+		res = hybridAttack(B, B_1_reduced_transposed, B_reduced_gs, r, c, g, timer_begin, vectorFound);
+	}
+	while (!vectorFound);
 #endif
 
-	// init the random seed
+#ifndef MODE_5
+// init the random seed
 	vec_RR res = hybridAttack(B, B_1_reduced_transposed, B_reduced_gs, r, c, g);
+#endif
 
 #ifdef MODE_2
 	repermutate(res, permutation);
 #endif
 
-#ifdef USING_MPI
 	std::cout << "\nMPI-proc " << world_rank << " returns " << res << std::endl;
-#else
-	std::cout << "\nfound " << res << std::endl;
-#endif
 }
 
