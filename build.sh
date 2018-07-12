@@ -18,6 +18,9 @@ sed -i "s/DIM[ ][0-9]*/DIM $dim/" include/Utils.h
 DEFS="-DMODE_$mode$"
 
 # recompile
+LD_PRELOAD=libtbbmalloc_proxy.so.2
+export LD_PRELOAD
+
 make clean
 make -j8 DEFS=$DEFS
 
