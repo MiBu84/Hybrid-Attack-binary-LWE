@@ -1,5 +1,4 @@
 I. Source Code Structure
-
 The source code should contain the following folders:
 	src			: contains implementations (.cpp files)
 	include			: contains headers (.h files)
@@ -11,7 +10,7 @@ The source code should contain the following folders:
 					Each folder contains as many text files as the number of MPI processes.
 Notes:
 If the folder "MPI-output"is not present, it must be created otherwise the output of MPI is lost.
-The program has two main routines called "precomputing" and "hybridAttack" which are implemented in "src/Attack.cpp".
+The program HybridAttack has two main routines called "precomputing" and "hybridAttack" which are implemented in "src/Attack.cpp".
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 II. Libraries for Compiling HybridAttack
@@ -84,13 +83,19 @@ with the following arguments:
 	m			: as described in paper
 	r			: as described in paper
 	mode			: as described above	
+
+Additionally, running build.sh also builds two executables named GenerateInputHybridAttackBinaryError and GenerateInputHybridAttackRandomError
+for generating input basis. Code for these two executables GenerateInputHybridAttackBinaryError and GenerateInputHybridAttackRandomError
+reside in two folders GenerateBinaryError and GenerateRandomError, correspondingly.
+In summary, building the program with build.sh generates three executables, namely:
+- HybridAttack
+- GenerateInputHybridAttackBinaryError
+- GenerateInputHybridAttackRandomError
+For the usage of GenerateInputHybridAttackBinaryError and GenerateInputHybridAttackRandomError, see Section IV.
+
 For example, running 
 build.sh -m 160 -r 20 -mode 1 
 will compile the program for m = 160, r = 20 in mode 1.
-
-Notes: 
-Additionally, running build.sh also builds two executables named GenerateInputHybridAttackBinaryError and GenerateInputHybridAttackRandomError
-for generating input basis. 
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 IV. Generate Input Basis for HybridAttack
