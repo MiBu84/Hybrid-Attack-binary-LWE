@@ -5,6 +5,8 @@ The source code should contain the following folders:
 	include			: contains headers (.h files)
 	testcases		: contains input bases for HybridAttack
 	reduced_basis		: contains reduced bases
+	GenerateBinaryError	: code for generating input basis
+	GenerateRandomError	: code for generating input basis
 	MPI-output		: an output folder is generated for each MPI run.
 					Each folder contains as many text files as the number of MPI processes.
 Notes:
@@ -12,39 +14,22 @@ If the folder "MPI-output"is not present, it must be created otherwise the outpu
 The program has two main routines called "precomputing" and "hybridAttack" which are implemented in "src/Attack.cpp".
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-II. Libraries for compiling HybridAttack
+II. Libraries for Compiling HybridAttack
 
 In order to compile and run the program, the following libraries / compiler are needed:
+GCC (g++)
 OpenMPI (mpic++)
 NTL (thread-safe compiled)
 GMP
 Intel TBB
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-III. Generate Input Basis for HybridAttack
-
-1. Alternating Binary Error
-To generate an input basis with a binary error vector in which 0 and 1 alternate, i.e. [0 1 (0 1)], run ./GenerateInputHybridAttackBinaryError with the following arguments:
-	m			: as described in paper
-	n			: as described in paper
-	q			: as described in paper
-	output			: name (inclusive path) for output
-For example, running with
-./GenerateInputHybridAttackBinaryError -m 160 -n 80 -q 521 -output test13.txt
-will generate an output named test13.txt containing a matrix A, a vector b, a vector error in form [0 1 (0 1)].
-
-2. Random Binary Error 
-To generate an input basis with a random binary error, run ./GenerateInputHybridAttackRandomError with arguments equal 
-to those mentioned above for the GenerateInputHybridAttackBinaryError.
-
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-IV. Recompiling Code for Different Values of m, r
-
+III. Building the Application
 1. Running Modes of HybridAttack
 To run HybridAttack in different modes, choose
 
 - Mode 1:
-	(1) Basis is reduced without permutation and randomisation.
+	(1) Basis is reduced without permutation and randomization.
 	(2) The reduced basis is fed to a test for necessity condition. The test checks whether the hybrid attack could succeed on this given basis.
 		If the test is passed, return this basis and go to (3). Else repeat step (1).
 	(3) Running attack based on the reduced basis.
@@ -81,6 +66,7 @@ Notes:
 For mode 5, an argument -timeout must be given in order to determine the timeout to stop the attack process.
 For example, HybridAttack is started with
 ./HybridAttack -input testcases/test13.txt -m 160 -beta 20 -r 20 -c 5 -numthread 8 -timeout 600
+
 2. Output Reduced Bases to an Output File
 In order to output the reduced basis to an output and choosing mode 1 remove comments in the following lines
 	output_PrecomputedBasis_ToFile(B, B_1_reduced_transposed, B_reduced_gs,euclid_norm);
@@ -91,20 +77,47 @@ A reduced basis following the naming convention mentioned above is created in fo
 
 Notes:
 If there is no need to output reduced bases to text files, these two lines mentioned above should be commented out.
- 
-3. Recompiling
-For a different value of r, code needs to be recompiled by running a script called build.sh which is found in the source code folder.
-In build.sh, changing m, r to desired value and run build.sh with the following arguments:
-	m		: as described in paper
-	r		: as described in paper
-	mode		: as described above
+
+3. Building the Program
+The program HybridAttack is compiled by running a script called build.sh, which is found in the source code folder,
+with the following arguments:
+	m			: as described in paper
+	r			: as described in paper
+	mode			: as described above	
 For example, running 
-recompile.sh -m 160 -r 20 -mode 1 
+build.sh -m 160 -r 20 -mode 1 
 will compile the program for m = 160, r = 20 in mode 1.
 
+Notes: 
+Additionally, running build.sh also builds two executables named GenerateInputHybridAttackBinaryError and GenerateInputHybridAttackRandomError
+for generating input basis. 
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-V. Running HybridAttack
+IV. Generate Input Basis for HybridAttack
+
+1. Alternating Binary Error
+To generate an input basis with a binary error vector in which 0 and 1 alternate, i.e. [0 1 (0 1)], run ./GenerateInputHybridAttackBinaryError with the following arguments:
+	m			: as described in paper
+	n			: as described in paper
+	q			: as described in paper
+	output			: name (inclusive path) for output
+For example, running with
+./GenerateInputHybridAttackBinaryError -m 160 -n 80 -q 521 -output test13.txt
+will generate an output named test13.txt containing a matrix A, a vector b, a vector error in form [0 1 (0 1)].
+
+2. Random Binary Error 
+To generate an input basis with a random binary error, run ./GenerateInputHybridAttackRandomError with arguments equal 
+to those mentioned above for the GenerateInputHybridAttackBinaryError.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+V. Recompiling Code for Different Values of m, r
+For a different value of r, code needs to be recompiled. 
+Run build.sh with the desired values of m,r and mode.
+
+For example, run build.sh -m 160 -r 20 -mode 1
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+VI. Running HybridAttack
 HybridAttack needs the following arguments:
 	m			: as described in paper
 	r			: as described in paper
@@ -116,9 +129,7 @@ HybridAttack needs the following arguments:
 For example, let's consider this script:
 	
 	currentDate=$(date '+%d_%m_%Y_%T.%6N')
-	#basisOutput="reduced_basis/$currentDate"
 	mpiOutput="MPI-output/$currentDate"
-	#mkdir $basisOutput
 	mkdir $mpiOutput
 	instance="srun ./HybridAttack -input testcases/test13.txt -m 160 -beta 20 -r 20 -c 5 -numthread 8 -output $currentDate"
 	$instance
@@ -132,7 +143,7 @@ Output of MPI processes are found in folder "MPI-output". As mentioned before, t
 time of execution. The naming convention for the output of a MPI process with process ID "procID" is "output_proc_procID.txt".
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-VI. Demo
+VII. Demo
 - For demo of mode 1,3, and 4, compile and run HybridAttack with the arguments: -input testcases/test13.txt -m 160 -beta 20 -r 20 -c 5
 (for MPI and OMP, arguments "numthread" and "output" must also be set) 
 - For demo of mode 2, compile and run HybridAttack with the arguments: -input testcases/test17.txt -m 160 -beta 3 -r 4 -c 1
