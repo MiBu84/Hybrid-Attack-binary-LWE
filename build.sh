@@ -21,6 +21,21 @@ DEFS="-DMODE_$mode$"
 LD_PRELOAD=libtbbmalloc_proxy.so.2
 export LD_PRELOAD
 
+#remove compiled executables 
+rm GenerateInputHybridAttackBinaryError
+rm GenerateInputHybridAttackRandomError
+
+cd GenerateBinaryError
+make clean
+make
+cp GenerateInputHybridAttackBinaryError ../
+
+cd ../GenerateRandomError
+make clean
+make
+cp GenerateInputHybridAttackRandomError ../
+
+cd ..
 make clean
 make -j8 DEFS=$DEFS
 

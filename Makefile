@@ -1,13 +1,13 @@
-BIN=HybridAttack
+BIN=HybridAttack 
 SRCDIR=src
 SRCS=$(wildcard $(SRCDIR)/*.cpp)
 OBJS=$(SRCS:$(SRCDIR)/%.cpp=$(SRCDIR)/%.o)
 DEPS=$(SRCS:$(SRCDIR)/%.cpp=$(SRCDIR)/%.d)
 
-CC = mpic++ #g++
+CC = mpic++
 
 CPPFLAGS +=$(DEFS)
-#
+
 CFLAGS=  -fopenmp -g -Wfatal-errors -march=native -std=c++11  -Ofast
 
 LFLAGS= -fopenmp -g -lntl -lgmp -ltbb -ltbbmalloc_proxy -ltbbmalloc
