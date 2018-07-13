@@ -8,8 +8,8 @@ The source code should contain the following folders:
 	MPI-output		: an output folder is generated for each MPI run.
 					Each folder contains as many text files as the number of MPI processes.
 Notes:
-If the folder "MPI-output"is not present, it must be created otherwise the output of MPI is loss.
-The program has two main routines so-called "precomputing" and "hybridAttack" which are implemented in "src/Attack.cpp".
+If the folder "MPI-output"is not present, it must be created otherwise the output of MPI is lost.
+The program has two main routines called "precomputing" and "hybridAttack" which are implemented in "src/Attack.cpp".
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 II. Libraries for compiling HybridAttack
@@ -29,19 +29,19 @@ To generate an input basis with a binary error vector in which 0 and 1 alternate
 	n			: as described in paper
 	q			: as described in paper
 	output			: name (inclusive path) for output
-For example, run
+For example, running with
 ./GenerateInputHybridAttackBinaryError -m 160 -n 80 -q 521 -output test13.txt
 will generate an output named test13.txt containing a matrix A, a vector b, a vector error in form [0 1 (0 1)].
 
 2. Random Binary Error 
-To generate an input basis with a random binary error, run ./GenerateInputHybridAttackRandomError with arguments similar 
+To generate an input basis with a random binary error, run ./GenerateInputHybridAttackRandomError with arguments equal 
 to those mentioned above for the GenerateInputHybridAttackBinaryError.
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 IV. Recompiling Code for Different Values of m, r
 
 1. Running Modes of HybridAttack
-To run HybridAttack in different modes, choosing 
+To run HybridAttack in different modes, choose
 
 - Mode 1:
 	(1) Basis is reduced without permutation and randomisation.
@@ -60,7 +60,7 @@ This mode is used for an input basis with a random binary error, which is genera
 For example, try the input basis named test17.txt found in folder "testcases".
 
 - Mode 3:
-	Each reads a reduced basis and goes directly to the attack step.
+	Each process reads a reduced basis and goes directly to the attack step.
 
 - Mode 4:
 	MPI processes with even IDs reduce input basis before executing attack.
@@ -68,11 +68,11 @@ For example, try the input basis named test17.txt found in folder "testcases".
 
 Notes:
 For mode 3 and 4: the naming convention for a reduced basis is: [name_of_testcase(without .txt)]_r_[value_of_r]_beta_[value_of_beta].txt
-For example, if the arguments of HybridAttack is -input testcases/test13.txt -m 160 -beta 20 -r 20 then the name of the reduced basis must be 
+For example, if the arguments of HybridAttack are -input testcases/test13.txt -m 160 -beta 20 -r 20 then the name of the reduced basis must be 
 test13_r_20_beta_20.txt. This reduced basis must be found in folder "reduced_basis".
 
 - Mode 5:
-	(1) Basis multiplied with an unimodular matrix before being reduced.
+	(1) Basis is multiplied with an unimodular matrix before being reduced.
 		There is no test for necessity condition at the end of the precomputing step.
 	(2) Each MPI process begins the attack step with the reduced basis from step (1).
 		If timeout (given in seconds, see below) is exceeded, process returns to step (1).
@@ -82,7 +82,7 @@ For mode 5, an argument -timeout must be given in order to determine the timeout
 For example, HybridAttack is started with
 ./HybridAttack -input testcases/test13.txt -m 160 -beta 20 -r 20 -c 5 -numthread 8 -timeout 600
 2. Output Reduced Bases to an Output File
-In order to output the reduced basis to an output, choosing mode 1 and removing comments in the following lines
+In order to output the reduced basis to an output and choosing mode 1 remove comments in the following lines
 	output_PrecomputedBasis_ToFile(B, B_1_reduced_transposed, B_reduced_gs,euclid_norm);
 	return;
 These lines are found at the end of the procedure "precomputing" in "src/Attack.cpp".
@@ -93,7 +93,7 @@ Notes:
 If there is no need to output reduced bases to text files, these two lines mentioned above should be commented out.
  
 3. Recompiling
-For a different value of r, code needs to be recompiled by running a script called build.sh which is be found in the source code folder.
+For a different value of r, code needs to be recompiled by running a script called build.sh which is found in the source code folder.
 In build.sh, changing m, r to desired value and run build.sh with the following arguments:
 	m		: as described in paper
 	r		: as described in paper
@@ -123,13 +123,12 @@ For example, let's consider this script:
 	instance="srun ./HybridAttack -input testcases/test13.txt -m 160 -beta 20 -r 20 -c 5 -numthread 8 -output $currentDate"
 	$instance
 
-Before executing HybridAttack with MPI, for example by calling srun in slurm, this script creates a folder whose name is set as the current
-system time for separately writing output stream of each MPI process.
+Before executing HybridAttack with MPI, for example, by calling srun in slurm, this script creates a folder whose name is set as the current system time for separately writing output stream of each MPI process.
 In this example, HybridAttack gets an input basis named test13.txt and runs for m=160, beta = 20, r = 20, and c = 5.
 The attack step is executed by 8 OpenMP threads within each MPI process.
 
 Notes:
-Output of MPI processes are found in folder "MPI-output". As being aforementioned, the subfolder containing the MPI's output is the system time at
+Output of MPI processes are found in folder "MPI-output". As mentioned before, the subfolder containing the MPI's output is the system time at
 time of execution. The naming convention for the output of a MPI process with process ID "procID" is "output_proc_procID.txt".
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
