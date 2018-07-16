@@ -151,5 +151,5 @@ time of execution. The naming convention for the output of a MPI process with pr
 VII. Demo
 - For demo of mode 1,3, and 4, compile and run HybridAttack with the arguments: -input testcases/test13.txt -m 160 -beta 20 -r 20 -c 5
 (for MPI and OMP, arguments "numthread" and "output" must also be set) 
-- For demo of mode 2, compile and run HybridAttack with the arguments: -input testcases/test17.txt -m 160 -beta 3 -r 4 -c 1
+- For demo of mode 2, compile and run HybridAttack with the arguments: -input testcases/test17.txt -m 100 -beta 3 -r 4 -c 1
 (for MPI and OMP, arguments "numthread" and "output" must also be set)
